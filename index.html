@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Traverse</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --paper:#ffffff;
+    --line:#0a0a0a;
+    --hair:#e4e4e2;
+    --nav-h:60px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Archivo',system-ui,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  /* nav */
+  nav{height:var(--nav-h);position:fixed;inset:0 0 auto 0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--ink);color:var(--paper)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.03em;font-size:22px}
+  .brand svg{width:18px;height:24px}
+  .brand small{font-weight:600;font-size:11px;letter-spacing:.28em;color:var(--paper);text-transform:uppercase;margin-left:4px}
+  nav .links{display:flex;gap:4px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  nav .links button{background:none;border:none;color:var(--paper);cursor:pointer;padding:8px 12px;font:inherit;letter-spacing:inherit;text-transform:inherit}
+  nav .links button.active{border-bottom:2px solid var(--paper)}
+  .hamburger{display:none;background:none;border:none;color:var(--paper);cursor:pointer;padding:6px;margin:-6px}
+  .hamburger svg{width:26px;height:26px;display:block}
+
+  main{padding-top:var(--nav-h);min-height:100vh}
+  .view{display:none}
+  .view.show{display:block}
+
+  /* home */
+  .hero{min-height:calc(100vh - var(--nav-h));display:grid;grid-template-columns:1.05fr .95fr}
+  .hero-copy{display:flex;flex-direction:column;justify-content:center;padding:0 56px}
+  .hero-graph{border-left:1px solid var(--line);position:relative;overflow:hidden;background:
+    repeating-linear-gradient(0deg,transparent,transparent 33px,#efefee 33px,#efefee 34px),
+    repeating-linear-gradient(90deg,transparent,transparent 33px,#efefee 33px,#efefee 34px)}
+  .hero-graph canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .hero .kick{font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:22px}
+  .hero h1{font-size:clamp(46px,8vw,110px);line-height:.9;font-weight:900;letter-spacing:-.045em}
+  .hero p{margin-top:26px;max-width:46ch;font-size:18px;line-height:1.5;font-weight:500}
+  .hero .cta{margin-top:34px;align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:none;cursor:pointer;padding:16px 30px}
+  .hero .cta:hover{opacity:.85}
+
+  /* map */
+  .map-wrap{display:grid;grid-template-columns:400px 1fr;height:calc(100vh - var(--nav-h))}
+  .panel{border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  .panel-head{padding:22px 24px 18px;border-bottom:1px solid var(--line)}
+  .panel-head h2{font-size:24px;font-weight:900;letter-spacing:-.03em}
+  .panel-head p{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+  .controls{padding:8px 0}
+  .field{padding:16px 24px;position:relative}
+  .field label{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+  .field input{width:100%;padding:13px 12px;border:1px solid var(--line);background:#fff;font-family:inherit;font-size:15px;font-weight:500;color:var(--ink)}
+  .field input:focus{outline:2px solid var(--ink);outline-offset:-1px}
+  .drop{position:absolute;left:24px;right:24px;top:calc(100% - 8px);background:#fff;border:1px solid var(--line);z-index:60;max-height:230px;overflow-y:auto;display:none}
+  .drop.show{display:block}
+  .drop div{padding:11px 12px;font-size:14px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--hair)}
+  .drop div:last-child{border-bottom:none}
+  .drop div:hover,.drop div.hi{background:var(--ink);color:var(--paper)}
+  .swap{margin:0 24px;display:flex;align-items:center;justify-content:flex-end}
+  .swap button{background:none;border:none;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--ink);text-decoration:underline;padding:4px 0}
+  .go{margin:16px 24px 20px;padding:16px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  .go:hover{opacity:.85}
+  .go:disabled{background:#c9c9c7;cursor:not-allowed}
+
+  .results{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
+  .summary{display:flex;background:var(--ink);color:var(--paper)}
+  .summary div{flex:1;padding:16px 20px;border-right:1px solid #2a2a2a}
+  .summary div:last-child{border-right:none}
+  .summary b{display:block;font-size:26px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .summary span{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .steps{list-style:none}
+  .steps li{display:flex;gap:14px;align-items:baseline;padding:14px 24px;border-bottom:1px solid var(--hair)}
+  .steps li .n{font-size:13px;font-weight:800;min-width:22px;font-variant-numeric:tabular-nums}
+  .steps li .t{flex:1;font-size:14px;font-weight:500;line-height:1.4}
+  .steps li .d{font-size:13px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .placeholder{padding:28px 24px;font-size:15px;font-weight:600;line-height:1.6}
+  .note{padding:20px 24px;font-size:14px;font-weight:600;line-height:1.5}
+
+  #map{height:100%;width:100%;background:#eaeae8}
+  .leaflet-tile-pane{filter:grayscale(1) contrast(1.04)}
+  .leaflet-container{background:#eaeae8;font-family:'Archivo',sans-serif}
+  .leaflet-control-zoom a{border-radius:0!important;color:var(--ink)!important;background:#fff!important;border:1px solid var(--ink)!important}
+  .leaflet-bar{border-radius:0!important;box-shadow:none!important}
+  .leaflet-routing-container{display:none!important}   /* hide default panel, we render our own */
+  .campus-dot{background:#fff;border:2px solid var(--ink);border-radius:50%;width:8px!important;height:8px!important;margin:-4px 0 0 -4px!important}
+
+  /* about */
+  .about{max-width:720px;margin:0 auto;padding:72px 32px 96px}
+  .about .kick{font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:20px}
+  .about h1{font-size:clamp(40px,6vw,72px);font-weight:900;letter-spacing:-.04em;line-height:.96;margin-bottom:30px}
+  .about p{font-size:18px;line-height:1.6;font-weight:500;margin-bottom:18px;max-width:60ch}
+
+  .site-footer{border-top:1px solid var(--line);padding:22px 32px;font-size:13px;font-weight:600;color:var(--ink)}
+  .site-footer a{color:var(--ink);text-decoration:underline}
+  .site-footer a:hover{opacity:.6}
+    .hamburger{display:block}
+    nav .links{position:absolute;top:var(--nav-h);left:0;right:0;flex-direction:column;gap:0;background:var(--ink);border-bottom:1px solid #2a2a2a;display:none}
+    nav .links.open{display:flex}
+    nav .links button{width:100%;text-align:left;padding:16px 24px;border-bottom:1px solid #2a2a2a}
+    nav .links button:last-child{border-bottom:none}
+    nav .links button.active{border-bottom:1px solid #2a2a2a;background:#1a1a1a}
+    nav .links button:last-child.active{border-bottom:none}
+    .hero{grid-template-columns:1fr}
+    .hero-graph{display:none}
+    .hero-copy{padding:44px 28px;min-height:calc(100vh - var(--nav-h));justify-content:center}
+    .map-wrap{grid-template-columns:1fr;height:auto}
+    .panel{border-right:none;overflow:visible}
+    .results{overflow-y:visible}
+    #map{height:56vh;border-top:1px solid var(--line)}
+  }
+  @media(max-width:400px){
+    .hero-copy{padding:36px 20px}
+    .field,.panel-head{padding-left:20px;padding-right:20px}
+    .drop{left:20px;right:20px}
+    .go,.swap{margin-left:20px;margin-right:20px}
+    .steps li,.about{padding-left:20px;padding-right:20px}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <svg viewBox="0 0 40 52" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 1C10 1 2 8.6 2 18.4 2 31 20 51 20 51s18-20 18-32.6C38 8.6 30 1 20 1Z" fill="#fff" stroke="#fff" stroke-width="2"/>
+      <path d="M20 6.5c-6.4 0-11.5 4.1-11.5 10.9C8.5 26 20 40 20 40s11.5-14 11.5-22.6C31.5 10.6 26.4 6.5 20 6.5Z" fill="#0a0a0a"/>
+      <path d="M20 11.5l6.5 3v5.2c0 4-2.8 6.9-6.5 8.4-3.7-1.5-6.5-4.4-6.5-8.4v-5.2l6.5-3Z" fill="#fff"/>
+    </svg>
+    Traverse <small>UNILAG</small>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="links" id="links">
+    <button data-nav="home" class="active">Home</button>
+    <button data-nav="map">Map</button>
+    <button data-nav="about">About</button>
+  </div>
+</nav>
+
+<main>
+  <section class="view show" id="home">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="kick">University of Lagos, Akoka</div>
+        <h1>Know your<br>way around<br>campus.</h1>
+        <p>Pick where you are and where you are going. Traverse maps the route and walks you through every turn.</p>
+        <button class="cta" data-nav="map">Find a route</button>
+      </div>
+      <div class="hero-graph"><canvas id="heroCanvas"></canvas></div>
+    </div>
+  </section>
+
+  <section class="view" id="map-view">
+    <div class="map-wrap">
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>Find your route</h2>
+          <p>On campus locations only</p>
+        </div>
+        <div class="controls">
+          <div class="field">
+            <label>Start</label>
+            <input id="fromInput" autocomplete="off" placeholder="Where are you now" />
+            <div class="drop" id="fromDrop"></div>
+          </div>
+          <div class="field">
+            <label>Destination</label>
+            <input id="toInput" autocomplete="off" placeholder="Where are you going" />
+            <div class="drop" id="toDrop"></div>
+          </div>
+          <div class="swap"><button id="swapBtn">Swap</button></div>
+          <button class="go" id="findBtn" disabled>Find route</button>
+        </div>
+        <div class="results" id="results">
+          <div class="placeholder">Choose a start and a destination to see the route and directions.</div>
+        </div>
+      </aside>
+      <div id="map"></div>
+    </div>
+  </section>
+
+  <section class="view" id="about">
+    <div class="about">
+      <div class="kick">About</div>
+      <h1>Move around<br>Akoka.</h1>
+      <p>Traverse helps you get around the University of Lagos. Choose a starting point and a destination from campus locations, and it draws the route on the map with step by step directions and the total distance.</p>
+      <p>Made for students, staff, and first time visitors finding their way across campus.</p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    Built by <a href="https://abdullahioriola.vercel.app/" target="_blank" rel="noopener">Oriola Abdullahi Adeola</a> for NITHUB Software Engineering Training
+  </footer>
+</main>
+
+<script>
+/* Campus locations. Coordinates are approximate Akoka points and snap to
+   the nearest road when routing. Swap in exact lat/lng to sharpen results. */
+const PLACES = [
+  { name:"First Gate",                 lat:6.5157, lng:3.3859 },
+  { name:"Second Gate",                lat:6.5183, lng:3.3901 },
+  { name:"New Hall (Jaja)",            lat:6.5205, lng:3.3948 },
+  { name:"Moremi Hall",                lat:6.5195, lng:3.3991 },
+  { name:"Senate Building",            lat:6.5192, lng:3.3985 },
+  { name:"Main Library",               lat:6.5178, lng:3.3979 },
+  { name:"Faculty of Science",         lat:6.5199, lng:3.3969 },
+  { name:"Faculty of Arts",            lat:6.5168, lng:3.3962 },
+  { name:"Faculty of Engineering",     lat:6.5211, lng:3.3979 },
+  { name:"Faculty of Law",             lat:6.5162, lng:3.3941 },
+  { name:"Faculty of Education",       lat:6.5173, lng:3.3931 },
+  { name:"Faculty of Social Sciences", lat:6.5175, lng:3.3952 },
+  { name:"Faculty of Environmental Sciences", lat:6.5207, lng:3.3934 },
+  { name:"Main Auditorium",            lat:6.5185, lng:3.3938 },
+  { name:"Central Mosque",             lat:6.5197, lng:3.3922 },
+  { name:"Chapel of Christ Our Light", lat:6.5151, lng:3.3971 },
+  { name:"Sports Complex",             lat:6.5218, lng:3.3958 },
+  { name:"Health Centre",              lat:6.5166, lng:3.3915 },
+  { name:"University Bookshop",        lat:6.5159, lng:3.3928 },
+  { name:"Distance Learning Institute",lat:6.5147, lng:3.3948 },
+  { name:"Julius Berger Hall",         lat:6.5181, lng:3.3970 },
+  { name:"Wema Bank",                  lat:6.5169, lng:3.3902 },
+];
+
+/* nav routing + collapsible menu */
+const views = { home:'home', map:'map-view', about:'about' };
+const linksEl = document.getElementById('links');
+const burger = document.getElementById('hamburger');
+function closeMenu(){ linksEl.classList.remove('open'); burger.setAttribute('aria-expanded','false'); }
+burger.addEventListener('click',()=>{
+  const open = linksEl.classList.toggle('open');
+  burger.setAttribute('aria-expanded', open?'true':'false');
+});
+function show(nav){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+  document.getElementById(views[nav]).classList.add('show');
+  document.querySelectorAll('nav .links button').forEach(b=>b.classList.toggle('active', b.dataset.nav===nav));
+  closeMenu();
+  if(nav==='map' && map) setTimeout(()=>map.invalidateSize(), 80);
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click',()=>show(el.dataset.nav)));
+
+/* custom monochrome marker */
+const markerIcon = L.divIcon({
+  className:'',
+  html:`<svg viewBox="0 0 40 52" xmlns="http://www.w3.org/2000/svg">
+     <path d="M20 1C10 1 2 8.6 2 18.4 2 31 20 51 20 51s18-20 18-32.6C38 8.6 30 1 20 1Z" fill="#0a0a0a" stroke="#fff" stroke-width="2"/>
+     <path d="M20 11.5l6.5 3v5.2c0 4-2.8 6.9-6.5 8.4-3.7-1.5-6.5-4.4-6.5-8.4v-5.2l6.5-3Z" fill="#fff"/>
+   </svg>`,
+  iconSize:[32,42], iconAnchor:[16,42]
+});
+
+/* map */
+let map, control;
+function initMap(){
+  map = L.map('map',{zoomControl:true}).setView([6.5183,3.3948], 15);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:20
+  }).addTo(map);
+
+  control = L.Routing.control({
+    waypoints:[],
+    router:L.Routing.osrmv1({ serviceUrl:'https://router.project-osrm.org/route/v1', profile:'driving' }),
+    lineOptions:{ styles:[{color:'#0a0a0a', weight:5, opacity:1}] },
+    show:false, addWaypoints:false, draggableWaypoints:false, fitSelectedRoutes:true,
+    createMarker:(i,wp)=>L.marker(wp.latLng,{icon:markerIcon})
+  }).addTo(map);
+
+  control.on('routesfound', e=>renderRoute(e.routes[0]));
+  control.on('routingerror', ()=>{
+    document.getElementById('results').innerHTML =
+      '<div class="note">The routing server did not respond. It is a free public server and gets busy. Wait a moment and hit Find route again.</div>';
+  });
+}
+initMap();
+
+/* autocomplete */
+const names = PLACES.map(p=>p.name);
+let fromIdx=-1, toIdx=-1;
+function wire(inputId, dropId, get, set){
+  const input=document.getElementById(inputId), drop=document.getElementById(dropId);
+  input.addEventListener('input',()=>{
+    const q=input.value.trim().toLowerCase(); set(-1);
+    const hits=names.map((nm,i)=>({nm,i})).filter(o=>o.nm.toLowerCase().includes(q));
+    if(!q||!hits.length){drop.classList.remove('show');drop.innerHTML='';validate();return;}
+    drop.innerHTML=hits.map(o=>`<div data-i="${o.i}">${o.nm}</div>`).join('');
+    drop.classList.add('show');
+    drop.querySelectorAll('div').forEach(d=>d.addEventListener('mousedown',ev=>{
+      ev.preventDefault();
+      input.value=names[+d.dataset.i]; set(+d.dataset.i);
+      drop.classList.remove('show'); validate();
+    }));
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>drop.classList.remove('show'),120));
+}
+wire('fromInput','fromDrop',()=>fromIdx,i=>fromIdx=i);
+wire('toInput','toDrop',()=>toIdx,i=>toIdx=i);
+
+const findBtn=document.getElementById('findBtn');
+function validate(){ findBtn.disabled = !(fromIdx>-1 && toIdx>-1 && fromIdx!==toIdx); }
+
+document.getElementById('swapBtn').addEventListener('click',()=>{
+  const fi=document.getElementById('fromInput'), ti=document.getElementById('toInput');
+  [fi.value,ti.value]=[ti.value,fi.value];
+  [fromIdx,toIdx]=[toIdx,fromIdx];
+  validate();
+});
+
+/* resolve a campus place to real coordinates from OpenStreetMap,
+   bounded to the UNILAG area; fall back to stored coords */
+const geoCache = {};
+async function locate(place){
+  if (geoCache[place.name]) return geoCache[place.name];
+  try{
+    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&bounded=1'
+      + '&viewbox=3.379,6.527,3.412,6.508'
+      + '&q=' + encodeURIComponent(place.name + ', University of Lagos');
+    const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+    const j = await r.json();
+    if (Array.isArray(j) && j[0]){
+      const hit = { lat:+j[0].lat, lng:+j[0].lon };
+      geoCache[place.name] = hit;
+      return hit;
+    }
+  }catch(e){}
+  return { lat:place.lat, lng:place.lng };
+}
+
+findBtn.addEventListener('click', async ()=>{
+  if(fromIdx<0||toIdx<0) return;
+  findBtn.disabled = true;
+  document.getElementById('results').innerHTML='<div class="placeholder">Finding the route...</div>';
+  const [a,b] = await Promise.all([locate(PLACES[fromIdx]), locate(PLACES[toIdx])]);
+  control.setWaypoints([L.latLng(a.lat,a.lng), L.latLng(b.lat,b.lng)]);
+  findBtn.disabled = false;
+});
+
+/* render our own directions from the route */
+const fmt = new L.Routing.Formatter();
+function metres(m){ return m>=1000 ? (m/1000).toFixed(2)+' km' : Math.round(m)+' m'; }
+function walkTime(m){ return Math.max(1, Math.round(m/1.35/60)) + ' min'; }
+
+function renderRoute(route){
+  const total = route.summary.totalDistance;
+  const steps = route.instructions.map(ins=>({
+    text: fmt.formatInstruction(ins),
+    dist: ins.distance
+  }));
+  const rows = steps.map((s,i)=>`
+    <li>
+      <span class="n">${i+1}</span>
+      <span class="t">${s.text}</span>
+      <span class="d">${s.dist>0?metres(s.dist):''}</span>
+    </li>`).join('');
+
+  document.getElementById('results').innerHTML = `
+    <div class="summary">
+      <div><b>${metres(total)}</b><span>Distance</span></div>
+      <div><b>${walkTime(total)}</b><span>Walk time</span></div>
+    </div>
+    <ol class="steps">${rows}</ol>`;
+}
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+    "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.webgpu.js",
+    "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.tsl.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* Living node network. three r185 WebGL renderer via ES modules.
+   Nodes float, links breathe, the graph rotates and follows the cursor. */
+import * as THREE from 'three';
+
+const canvas = document.getElementById('heroCanvas');
+const holder = canvas?.parentElement;
+if (canvas && holder){
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+  camera.position.set(0, 0, 9.5);
+
+  /* build node positions from the real campus points, spread into 3D */
+  const la = PLACES.map(p=>p.lat), lo = PLACES.map(p=>p.lng);
+  const minLa=Math.min(...la), maxLa=Math.max(...la);
+  const minLo=Math.min(...lo), maxLo=Math.max(...lo);
+  const basePos = PLACES.map((p,i)=>new THREE.Vector3(
+    ((p.lng-minLo)/(maxLo-minLo) - .5) * 3.8,
+    ((p.lat-minLa)/(maxLa-minLa) - .5) * 4.6,
+    Math.sin(i*2.399) * 1.0
+  ));
+  const phase = PLACES.map((_,i)=>i*1.7);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  /* nodes */
+  const nodeGeo = new THREE.SphereGeometry(0.075, 20, 20);
+  const nodeMat = new THREE.MeshBasicMaterial({ color:0x0a0a0a });
+  const nodes = basePos.map(v=>{
+    const m = new THREE.Mesh(nodeGeo, nodeMat);
+    m.position.copy(v);
+    group.add(m);
+    return m;
+  });
+
+  /* links: each node to its two nearest neighbours, deduplicated */
+  const linkPairs = [];
+  const seen = new Set();
+  basePos.forEach((v,i)=>{
+    basePos.map((w,j)=>({ j, d:v.distanceToSquared(w) }))
+      .filter(o=>o.j!==i).sort((a,b)=>a.d-b.d).slice(0,2)
+      .forEach(o=>{
+        const key = Math.min(i,o.j)+'-'+Math.max(i,o.j);
+        if(!seen.has(key)){ seen.add(key); linkPairs.push([i,o.j]); }
+      });
+  });
+  const linkPositions = new Float32Array(linkPairs.length * 6);
+  const linkGeo = new THREE.BufferGeometry();
+  linkGeo.setAttribute('position', new THREE.BufferAttribute(linkPositions, 3));
+  const linkMat = new THREE.LineBasicMaterial({ color:0x0a0a0a, transparent:true, opacity:0.32 });
+  group.add(new THREE.LineSegments(linkGeo, linkMat));
+
+  /* pulses that travel along the links */
+  const PULSES = 7;
+  const pulseGeo = new THREE.SphereGeometry(0.034, 12, 12);
+  const pulseMat = new THREE.MeshBasicMaterial({ color:0x0a0a0a });
+  const pulses = Array.from({length:PULSES}, (_,k)=>({
+    mesh: new THREE.Mesh(pulseGeo, pulseMat),
+    link: k % linkPairs.length,
+    t: (k*0.37) % 1,
+    speed: 0.16 + (k%3)*0.05
+  }));
+  pulses.forEach(p=>group.add(p.mesh));
+
+  /* size to container */
+  function resize(){
+    const w = holder.clientWidth, h = holder.clientHeight;
+    if(!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(holder);
+  resize();
+
+  /* cursor parallax */
+  let tx=0, ty=0, cx=0, cy=0;
+  addEventListener('pointermove', e=>{
+    tx = (e.clientX/innerWidth  - .5);
+    ty = (e.clientY/innerHeight - .5);
+  }, { passive:true });
+
+  const clock = new THREE.Clock();
+  function frame(){
+    const t = clock.getElapsedTime();
+
+    if(!reduceMotion){
+      group.rotation.y = t * 0.28 + cx * 0.55;
+      group.rotation.x = Math.sin(t * 0.18) * 0.10 + cy * 0.35;
+
+      nodes.forEach((m,i)=>{
+        m.position.copy(basePos[i]);
+        m.position.y += Math.sin(t*1.1 + phase[i]) * 0.08;
+        m.position.x += Math.cos(t*0.9 + phase[i]) * 0.05;
+      });
+
+      pulses.forEach(p=>{
+        p.t += p.speed * 0.028;
+        if(p.t >= 1){ p.t = 0; p.link = (p.link + 3) % linkPairs.length; }
+        const [a,b] = linkPairs[p.link];
+        p.mesh.position.lerpVectors(nodes[a].position, nodes[b].position, p.t);
+      });
+
+      cx += (tx-cx)*0.04;                       // ease toward cursor
+      cy += (ty-cy)*0.04;
+    } else {
+      group.rotation.y = 0.4;
+    }
+
+    /* keep link endpoints glued to the floating nodes */
+    linkPairs.forEach(([a,b],k)=>{
+      const pa=nodes[a].position, pb=nodes[b].position, o=k*6;
+      linkPositions[o]=pa.x; linkPositions[o+1]=pa.y; linkPositions[o+2]=pa.z;
+      linkPositions[o+3]=pb.x; linkPositions[o+4]=pb.y; linkPositions[o+5]=pb.z;
+    });
+    linkGeo.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+  renderer.setAnimationLoop(frame);
+}
+</script>
+<script>(function(){console.log(`
+                                    ∞∞∞≈÷×÷=∞
+                               √√≈≈√ π≈                            √÷==≈π
+                            ππππ   π                                  ≈√ ==∞π
+                          ππ   π                                        ≈π ππππ
+                       πππππ                                                ππππ
+                     √∞ππ       πππ√√  ππ√                                π     ππ
+                    √∞ππ            π×÷-∞√                     ∞≈√π         π πππ πππ
+                   √√π           ππ π                             √∞≠÷∞πππ      ππππ√π
+                  π√π      πππ                                       ∞ππππ     π ππππ√π
+                 πππ√√π   πππππ                                         πππ  ππππππππππ
+                πππππππππππππ√                 π πππ     ππππ π          ππππππππ  πππππ
+              ππ≈≈√√πππππππ≈       √ππ√∞√√√π∞√ππππππππ√π√πππππ√∞√∞∞ππ      √πππππ  ≈≠π ππ
+              π∞≈≈∞ππππππ≈    π√≈√√√√∞≈∞∞√π√∞∞√ππππππ√π√ππππ√√∞≈∞∞∞∞∞≈π√    π∞πππ∞∞πππ√∞π
+              π≠≈√πππ√πππ   π∞√π≈≠≠≈∞≈≈∞∞∞≈≈∞√√π√πππ√√π√√√√√√∞∞√√√√∞√√ππ≈≈π  π≈√∞ππππππ√π√
+               ≈≈≈πππππ ≈ππππ≈≠≈≈≈∞∞∞∞∞∞√√√√√√√√√√√π√√√√ππ√√√∞√√∞∞∞√√∞≈∞∞π∞√   ≈ππ√πππ√≈∞ππ
+               √∞∞√ππππ  √∞≠∞∞√√√√∞∞∞∞∞∞∞∞√∞√√√√√πππ√√√∞√ππ√∞√∞∞√∞∞∞∞√√√√∞∞√π√ ∞√π≈∞√π√∞∞√
+                √πππππππ√√ππ∞∞π√∞≈√√√∞√√√∞√√∞√√√π∞√√√√√√√∞√√√√√∞√≈√√∞∞√√√π∞√√∞≈∞ ππ√√√≠≠√π
+                 ππ   ππππ√≈∞√√∞≈∞∞∞∞∞∞√√π√√√√√∞√∞√ππ√√∞√∞∞√∞π√√√π√√√ ∞≈π√∞√∞√∞ ππππ√∞√√π
+                    πππππππ∞≈√√∞√∞≈≈≠≈∞√√∞≈∞√≈∞≈∞∞∞√√∞≈√∞≈≈≈√≈≈≈∞∞≈≈≈∞∞√π√∞ππππ ππππππππ
+                     √π πππ√≈∞∞≠≠≈≠=≈∞≈∞∞∞≈≈≈≈≈∞≈√≈∞∞∞≈∞∞≈≈≈∞∞≈≈∞√∞∞√∞∞≈≈∞≈ππππ ππ  ππ
+          ππππ≈π∞√      πππ∞∞∞∞≈≠≈∞≈∞∞≈∞∞√π√√≈√∞∞ππ∞√√∞∞∞∞πππ√≈≈≈√√∞∞√≈≈∞√∞√ππ
+     ≈√π ≠≠∞ππππππ∞√√=π√πππππ√∞∞∞∞√∞∞√≈√√√√π∞π∞π√√∞≈≈≈≈∞√πππ√ππ∞∞∞√√√≈∞√∞πππ
+   πππ           √≈≠≠≠√≈π≈≠πππππ√∞√√π√π√√√πππ∞π√√ππ∞ππ√∞πππππππππππ√∞√πππ        ππ√ππ√π√√ππ
+              √√√∞≈√∞∞≈≠π√≈×=∞  ππππππ√√πππππππ√√πππππ√∞√∞πππππππππ       π√≈√∞√π ππππππππππ  πππ
+         ππ√√√π √∞∞≈≈∞ππ π πππ∞≠×     ππππππππππ√ππππππππππ  πππ     ∞÷≠π√πππ√√√≈∞             π√
+         π ππ          π≈√≠√ππ∞≠≈√∞π           πππ    π          π≈÷≠√≠=≠π  π  ππ∞∞π π         π
+           ππ≈    π√π=≠≈π  π      ππππ≠       ππππ   πππ         ≈√=πππππππ∞∞√π    ππ √√∞
+             ππ≠≈π π                  πππ   π  π   π   ππ    √×÷√ππππππ  π  ππ≈π     πππ ππ
+             ∞πππππ                    ππ  π      πππ       √πππ               ππππ      π√
+               πππ                              π ππππ      π                 ππππππ     π
+                ππ∞π                                                             π π     π
+                    π                                                             √π     √
+
+  Built in Lagos, Nigeria.
+  abdullahioriola02@gmail.com
+`)})();</script>
+</body>
+</html>
