@@ -1,5 +1,7 @@
 # Traverse : UNILAG Campus Wayfinder
 
+![Traverse landing page](./screenshot.png)
+
 A monochrome campus navigation app for the University of Lagos, Akoka. Pick a start point and a destination from on-campus locations and get a real road route with turn-by-turn directions, total distance, and estimated walk time.
 
 Built for the NITHUB Software Engineering Training programme.
