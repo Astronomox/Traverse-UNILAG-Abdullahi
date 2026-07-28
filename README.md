@@ -1,4 +1,4 @@
-# Traverse — UNILAG Campus Wayfinder
+# Traverse : UNILAG Campus Wayfinder
 
 A monochrome campus navigation app for the University of Lagos, Akoka. Pick a start point and a destination from on-campus locations and get a real road route with turn-by-turn directions, total distance, and estimated walk time.
 
@@ -68,9 +68,9 @@ Coordinates snap to the nearest road via OSRM, but accuracy improves with exact 
 
 The campus locations form an undirected weighted graph. The app implements:
 
-- **Adjacency matrix** — N×N matrix where `matrix[i][j]` holds the haversine distance between connected nodes
-- **BFS** — breadth-first search via a queue, guarantees fewest-stop path
-- **DFS** — depth-first search via recursion
+- **Adjacency matrix** : N×N matrix where `matrix[i][j]` holds the haversine distance between connected nodes
+- **BFS** : breadth-first search via a queue, guarantees fewest-stop path
+- **DFS** : depth-first search via recursion
 
 These run under the hood to power the route comparison logic.
 
