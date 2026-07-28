@@ -513,7 +513,7 @@ if (canvas && holder){
       linkPositions[o+3]=pb.x; linkPositions[o+4]=pb.y; linkPositions[o+5]=pb.z;
     });
     linkGeo.attributes.position.needsUpdate = true;
-
+    //?To what end, I am breaking apart?
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(frame);
