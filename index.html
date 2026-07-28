@@ -107,6 +107,7 @@
   .site-footer{border-top:1px solid var(--line);padding:22px 32px;font-size:13px;font-weight:600;color:var(--ink)}
   .site-footer a{color:var(--ink);text-decoration:underline}
   .site-footer a:hover{opacity:.6}
+  @media(max-width:860px){
     .hamburger{display:block}
     nav .links{position:absolute;top:var(--nav-h);left:0;right:0;flex-direction:column;gap:0;background:var(--ink);border-bottom:1px solid #2a2a2a;display:none}
     nav .links.open{display:flex}
@@ -477,9 +478,10 @@ if (canvas && holder){
     ty = (e.clientY/innerHeight - .5);
   }, { passive:true });
 
-  const clock = new THREE.Clock();
+  const timer = new THREE.Timer();
   function frame(){
-    const t = clock.getElapsedTime();
+    timer.update();
+    const t = timer.getElapsed();
 
     if(!reduceMotion){
       group.rotation.y = t * 0.28 + cx * 0.55;
