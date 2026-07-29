@@ -210,31 +210,44 @@
 </main>
 
 <script>
-/* Campus locations. Coordinates are approximate Akoka points and snap to
-   the nearest road when routing. Swap in exact lat/lng to sharpen results. */
+/* Campus locations. Verified GPS from UniPATH source, main campus cluster only. */
 const PLACES = [
-  { name:"First Gate",                 lat:6.5157, lng:3.3859 },
-  { name:"Second Gate",                lat:6.5183, lng:3.3901 },
-  { name:"New Hall (Jaja)",            lat:6.5205, lng:3.3948 },
-  { name:"Moremi Hall",                lat:6.5195, lng:3.3991 },
-  { name:"Senate Building",            lat:6.5192, lng:3.3985 },
-  { name:"Main Library",               lat:6.5178, lng:3.3979 },
-  { name:"Faculty of Science",         lat:6.5199, lng:3.3969 },
-  { name:"Faculty of Arts",            lat:6.5168, lng:3.3962 },
-  { name:"Faculty of Engineering",     lat:6.5211, lng:3.3979 },
-  { name:"Faculty of Law",             lat:6.5162, lng:3.3941 },
-  { name:"Faculty of Education",       lat:6.5173, lng:3.3931 },
-  { name:"Faculty of Social Sciences", lat:6.5175, lng:3.3952 },
-  { name:"Faculty of Environmental Sciences", lat:6.5207, lng:3.3934 },
-  { name:"Main Auditorium",            lat:6.5185, lng:3.3938 },
-  { name:"Central Mosque",             lat:6.5197, lng:3.3922 },
-  { name:"Chapel of Christ Our Light", lat:6.5151, lng:3.3971 },
-  { name:"Sports Complex",             lat:6.5218, lng:3.3958 },
-  { name:"Health Centre",              lat:6.5166, lng:3.3915 },
-  { name:"University Bookshop",        lat:6.5159, lng:3.3928 },
-  { name:"Distance Learning Institute",lat:6.5147, lng:3.3948 },
-  { name:"Julius Berger Hall",         lat:6.5181, lng:3.3970 },
-  { name:"Wema Bank",                  lat:6.5169, lng:3.3902 },
+  { name:"First Gate",                       lat:6.518015, lng:3.384799 },
+  { name:"Wema Bank",                        lat:6.518251, lng:3.386959 },
+  { name:"Eco Bank",                         lat:6.519993, lng:3.397179 },
+  { name:"GTBank",                           lat:6.517469, lng:3.397785 },
+  { name:"Zenith Bank",                      lat:6.518342, lng:3.397656 },
+  { name:"Chapel of Christ Our Light",       lat:6.518971, lng:3.389568 },
+  { name:"School of Postgraduate Studies",   lat:6.516758, lng:3.386609 },
+  { name:"King Jaja Hall",                   lat:6.517056, lng:3.397777 },
+  { name:"Mariere Hall",                     lat:6.518699, lng:3.398228 },
+  { name:"Saburi Biobaku Hall",              lat:6.516164, lng:3.386987 },
+  { name:"Eni Njoku Hall",                   lat:6.519913, lng:3.393701 },
+  { name:"Sodeinde Hall",                    lat:6.520428, lng:3.392480 },
+  { name:"Queen Moremi Hall",                lat:6.518847, lng:3.397263 },
+  { name:"Madam Tinubu Hall (MTH)",          lat:6.521391, lng:3.391442 },
+  { name:"Kofo Ademola Hall",                lat:6.516417, lng:3.386963 },
+  { name:"Makama-Bida Hall",                 lat:6.520433, lng:3.392329 },
+  { name:"Senate Building",                  lat:6.520434, lng:3.398909 },
+  { name:"Amphi Theatre",                    lat:6.519080, lng:3.389966 },
+  { name:"Bookshop",                         lat:6.519721, lng:3.397687 },
+  { name:"Guest House",                      lat:6.522262, lng:3.399195 },
+  { name:"Sports Centre",                    lat:6.517602, lng:3.386659 },
+  { name:"CITS",                             lat:6.519328, lng:3.395826 },
+  { name:"NITHUB",                           lat:6.517334, lng:3.391551 },
+  { name:"Afe Babalola Hall",                lat:6.519377, lng:3.396955 },
+  { name:"Jelili Omotola Hall",              lat:6.517524, lng:3.387234 },
+  { name:"Julius Berger Hall",               lat:6.518328, lng:3.400393 },
+  { name:"Main Auditorium",                  lat:6.519664, lng:3.398844 },
+  { name:"Faculty of Science",               lat:6.516311, lng:3.399533 },
+  { name:"Faculty of Education",             lat:6.517718, lng:3.385543 },
+  { name:"Faculty of Social Sciences",       lat:6.516353, lng:3.391637 },
+  { name:"Faculty of Management Sciences",   lat:6.522280, lng:3.398589 },
+  { name:"Faculty of Law",                   lat:6.521385, lng:3.399104 },
+  { name:"Faculty of Environmental Sciences",lat:6.518399, lng:3.387119 },
+  { name:"Faculty of Engineering",           lat:6.519210, lng:3.399576 },
+  { name:"Faculty of Arts",                  lat:6.520447, lng:3.397859 },
+  { name:"Main Library",                     lat:6.521119, lng:3.399734 },
 ];
 
 /* nav routing + collapsible menu */
@@ -322,31 +335,15 @@ document.getElementById('swapBtn').addEventListener('click',()=>{
   validate();
 });
 
-/* resolve a campus place to real coordinates from OpenStreetMap,
-   bounded to the UNILAG area; fall back to stored coords */
-const geoCache = {};
-async function locate(place){
-  if (geoCache[place.name]) return geoCache[place.name];
-  try{
-    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&bounded=1'
-      + '&viewbox=3.379,6.527,3.412,6.508'
-      + '&q=' + encodeURIComponent(place.name + ', University of Lagos');
-    const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
-    const j = await r.json();
-    if (Array.isArray(j) && j[0]){
-      const hit = { lat:+j[0].lat, lng:+j[0].lon };
-      geoCache[place.name] = hit;
-      return hit;
-    }
-  }catch(e){}
-  return { lat:place.lat, lng:place.lng };
-}
+/* hardcoded coordinates verified against Google Maps satellite.
+   To correct any location: right-click it on Google Maps, copy the
+   coordinates, and paste them into the matching PLACES entry. */
 
-findBtn.addEventListener('click', async ()=>{
+findBtn.addEventListener('click', ()=>{
   if(fromIdx<0||toIdx<0) return;
   findBtn.disabled = true;
   document.getElementById('results').innerHTML='<div class="placeholder">Finding the route...</div>';
-  const [a,b] = await Promise.all([locate(PLACES[fromIdx]), locate(PLACES[toIdx])]);
+  const a = PLACES[fromIdx], b = PLACES[toIdx];
   control.setWaypoints([L.latLng(a.lat,a.lng), L.latLng(b.lat,b.lng)]);
   findBtn.disabled = false;
 });
@@ -513,7 +510,7 @@ if (canvas && holder){
       linkPositions[o+3]=pb.x; linkPositions[o+4]=pb.y; linkPositions[o+5]=pb.z;
     });
     linkGeo.attributes.position.needsUpdate = true;
-    //?To what end, I am breaking apart?
+
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(frame);
